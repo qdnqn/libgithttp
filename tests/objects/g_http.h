@@ -1,0 +1,78 @@
+#ifndef G_HTTP_H
+#define G_HTTP_H
+
+#include <stdlib.h>
+#include <stdarg.h>
+#include "g_buffer.h"
+#include "g_string.h"
+
+#define REF_WANT	0
+#define REF_HAVE	1
+#define REF_ADVERT	2
+
+/*
+typedef struct HTTP_capability{
+	g_str_t* capabilities;
+	size_t caps_sz;
+} http_capblt;
+
+typedef struct HTTP_capability{
+	g_str_t* capabilities;
+	size_t caps_sz;
+} http_capblt;
+
+typedef struct HTTP_push {
+	g_str_t* old_oid;
+	g_str_t* new_oid;
+	g_str_t* ref;
+	http_capblt capbls;
+} http_push;
+*/
+
+typedef struct HTTP_response {
+	g_str_t* refs;
+	g_str_t* output;
+	g_str_t* pack;
+	g_str_t* message;
+	g_str_t* request_file;
+	
+	g_str_t** refs_w;
+	g_str_t** refs_h;
+	g_str_t** refs_a;
+	
+	size_t refs_sz[3];
+	
+	g_str_t** push_old_oids;
+	g_str_t** push_new_oids;
+	g_str_t** push_refs;
+	g_str_t** push_capabilities;
+	
+	size_t push_sz[4];
+	
+	
+	/*
+	 * !Tracking data only for one active ref of type want or have or advertise refs or push.
+	 */
+	 
+	uint8_t multi_ack_detailed;
+	uint8_t no_done;
+	uint8_t side_band_64k;
+	uint8_t thin_pack; 
+	uint8_t ofs_delta;
+	uint8_t report_status;
+	g_str_t* agent;
+	g_str_t* symref;
+} g_http_resp;
+
+g_http_resp* response_init();
+
+uint8_t add_ref_w(g_http_resp* http, char* id);
+uint8_t add_ref_h(g_http_resp* http, char* id);
+uint8_t add_ref_a(g_http_resp* http, char* id);
+uint8_t add_push(g_http_resp* http, char* old_oidc, char* new_oidc, char* refc, char* capabilitiesc);
+void add_cap(g_http_resp* http, char* cap, char* value);
+void generate_cap_string(g_str_t*, g_http_resp*);
+
+void response_clean(g_http_resp*);
+
+#endif
