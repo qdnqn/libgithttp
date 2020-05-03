@@ -139,6 +139,9 @@ void get_packfile(g_http_resp* http, git_repository* repo, g_str_t* path_repo, c
 int8_t git_commit_packfile(g_str_t* packfile, g_str_t* packdir, g_str_t* new_head, git_repository* repo){			
 	string_append(packdir, "objects/pack/");
 	
+	git_odb *odb = NULL;
+	git_repository_odb(&odb, repo);
+	
 	git_indexer *idx;
 	git_indexer_progress stats = {0, 0};
 	int error = 0;
@@ -147,7 +150,7 @@ int8_t git_commit_packfile(g_str_t* packfile, g_str_t* packdir, g_str_t* new_hea
 	ssize_t read_bytes;
 	char buf[512];
 
-	if (git_indexer_new(&idx, packdir->str, 0, NULL, NULL) < 0) {
+	if (git_indexer_new(&idx, packdir->str, 0, odb, NULL) < 0) {
 		puts("bad idx");
 		return -1;
 	}
@@ -174,8 +177,10 @@ int8_t git_commit_packfile(g_str_t* packfile, g_str_t* packdir, g_str_t* new_hea
 		goto cleanup;
 	}
 
-	if ((error = git_indexer_commit(idx, &stats)) < 0)
+	if ((error = git_indexer_commit(idx, &stats)) < 0){
+		printf("ERROR: %d: %s\n", error, git_error_last()->message);
 		goto cleanup;
+	}
 
 	printf("\rIndexed %u of %u\n", stats.indexed_objects, stats.total_objects);
 	

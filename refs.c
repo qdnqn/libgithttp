@@ -160,10 +160,10 @@ int main(){
 	uint8_t d = authenticate(http);
 	
 	printf("Authenticate: %d\n", d);
-	
-	git_repository* repo = NULL;
-		
+			
 	string_char(path, "/home/wubuntu/ext10/Projects/git-server/testing_repos/test.repo/");
+	
+	git_repository *repo = NULL;
 	
 	if(git_init(&repo, path->str) == GIT_REPO_INITIALIZED){						
 		save_packfile(http, repo, path, "/home/wubuntu/test.txt");
