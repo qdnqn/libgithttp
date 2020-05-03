@@ -121,23 +121,27 @@ void git_set_refs(git_repository* r, g_str_t* grefs)
 					
 	string_append_hexsign(grefs, "# service=git-receive-pack\n");
 	string_add(grefs, "0000"); 																							// Dont need new line here! (*Git protocol)
-	 
-	while(git_reference_next(&ref, refs) == 0)
-	{
-		if (git_reference_type(ref) == GIT_REF_SYMBOLIC)
-		git_reference_resolve(&resolved, ref);
 	
-		oid = git_reference_target(resolved ? resolved : ref);
-		git_oid_fmt(hex, oid);
-		hex[GIT_OID_HEXSZ] = 0;
-		git_object_lookup(&obj, r, oid, GIT_OBJ_ANY);
+	if(!git_repository_is_empty(r)){
+		while(git_reference_next(&ref, refs) == 0)
+		{
+			if (git_reference_type(ref) == GIT_REF_SYMBOLIC)
+			git_reference_resolve(&resolved, ref);
 		
-		string_append_hexsign(grefs, "%s %s%creport-status delete-refs\n", hex, git_reference_name(ref), '\0');
-										
-		git_reference_free(ref);
-		
-		if (resolved)
-			git_reference_free(resolved);
+			oid = git_reference_target(resolved ? resolved : ref);
+			git_oid_fmt(hex, oid);
+			hex[GIT_OID_HEXSZ] = 0;
+			git_object_lookup(&obj, r, oid, GIT_OBJ_ANY);
+			
+			string_append_hexsign(grefs, "%s %s%creport-status delete-refs\n", hex, git_reference_name(ref), '\0');
+											
+			git_reference_free(ref);
+			
+			if (resolved)
+				git_reference_free(resolved);
+		}
+	} else {
+		string_append_hexsign(grefs, "%s %s%creport-status delete-refs\n", "0000000000000000000000000000000000000000", "capabilities^{}", '\0');
 	}
 	
 	string_append(grefs, "0000");
@@ -166,7 +170,7 @@ int main(){
 	git_repository *repo = NULL;
 	
 	if(git_init(&repo, path->str) == GIT_REPO_INITIALIZED){						
-		save_packfile(http, repo, path, "/home/wubuntu/test.txt");
+		//save_packfile(http, repo, path, "/home/wubuntu/test.txt");
 		
 		//git_get_refs(http, repo, http->refs, path);
 		//git_set_refs(repo, http->refs);

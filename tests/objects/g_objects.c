@@ -140,7 +140,7 @@ int8_t git_commit_packfile(g_str_t* packfile, g_str_t* packdir, g_str_t* new_hea
 	string_append(packdir, "objects/pack/");
 	
 	git_odb *odb = NULL;
-	git_repository_odb(&odb, repo);
+	git_repository_odb(&odb, repo);								// Needed for fixing thin-pack
 	
 	git_indexer *idx;
 	git_indexer_progress stats = {0, 0};
