@@ -7,9 +7,11 @@
 #include "g_string.h"
 #include "g_http.h"
 
+#include "hiredis.h"
+
 static void string_free_array(g_str_t** array, size_t* size);
 
-g_http_resp* response_init(){
+g_http_resp* response_init(g_str_t* username, g_str_t* repo, redisContext* context, uint8_t auth){
 	g_http_resp* temp = malloc(sizeof(g_http_resp));
 	
 	temp->refs = string_init();
@@ -17,6 +19,15 @@ g_http_resp* response_init(){
 	temp->pack = string_init();
 	temp->message =  string_init();
 	temp->request_file = string_init();
+	temp->username = string_init();
+	temp->repo = string_init();
+	
+	temp->redis = context;
+	temp->auth = auth;
+	temp->allowed = 0;
+	
+	string_append(temp->username, username->str);
+	string_append(temp->repo, repo->str);
 	
 	temp->refs_w = malloc(sizeof(g_str_t*));	
 	temp->refs_h = malloc(sizeof(g_str_t*));
@@ -55,6 +66,8 @@ void response_clean(g_http_resp* http){
 		string_clean(http->pack);
 		string_clean(http->message);
 		string_clean(http->request_file);
+		string_clean(http->username);
+		string_clean(http->repo);
 		
 		string_free_array(http->refs_w, &http->refs_sz[0]);
 		string_free_array(http->refs_h, &http->refs_sz[1]);
@@ -67,6 +80,8 @@ void response_clean(g_http_resp* http){
 				
 		string_clean(http->agent);
 		string_clean(http->symref);
+		
+		redisFree(http->redis);
 		
 		free(http);
 	}
@@ -281,4 +296,3 @@ void debug_caps(g_http_resp* http){
 		printf("report-status: no\n");
 	}
 }
-

@@ -5,6 +5,7 @@
 #include <stdarg.h>
 #include "g_buffer.h"
 #include "g_string.h"
+#include "hiredis.h"
 
 #define REF_WANT	0
 #define REF_HAVE	1
@@ -36,6 +37,9 @@ typedef struct HTTP_response {
 	g_str_t* message;
 	g_str_t* request_file;
 	
+	g_str_t* username;
+	g_str_t* repo;
+	
 	g_str_t** refs_w;
 	g_str_t** refs_h;
 	g_str_t** refs_a;
@@ -49,6 +53,11 @@ typedef struct HTTP_response {
 	
 	size_t push_sz[4];
 	
+	redisContext *redis;
+	redisReply *reply;	
+	
+	uint8_t allowed;
+	uint8_t auth;
 	
 	/*
 	 * !Tracking data only for one active ref of type want or have or advertise refs or push.
@@ -64,7 +73,7 @@ typedef struct HTTP_response {
 	g_str_t* symref;
 } g_http_resp;
 
-g_http_resp* response_init();
+g_http_resp* response_init(g_str_t*, g_str_t*, redisContext*, uint8_t);
 
 uint8_t add_ref_w(g_http_resp* http, char* id);
 uint8_t add_ref_h(g_http_resp* http, char* id);

@@ -7,7 +7,9 @@
 #include "g_http.h"
 #include "g_parser.h"
 #include "g_objects.h"
+#include "g_auth.h"
 #include "refs.h"
+#include "hiredis.h"
 
 void git_get_refs(g_http_resp* http, git_repository* repo, g_str_t* grefs, g_str_t* path){
 	git_reference_iterator *refs = NULL;
@@ -144,19 +146,33 @@ void git_set_refs(git_repository* r, g_str_t* grefs)
 }
 
 int main(){
-	g_http_resp* http = response_init();
+	g_str_t* username = string_init();
+	g_str_t* repox = string_init();
+	
+	string_add(username, "test");
+	string_add(repox, "test");
+	struct timeval timeout = { 1, 500000 }; // 1.5 seconds
+	redisContext *c = redisConnectWithTimeout("localhost", 6379, timeout);
+	
+	g_http_resp* http = response_init(username, repox, c, 1);
 	g_str_t* path = string_init();
+	
+	uint8_t d = authenticate(http);
+	
+	printf("Authenticate: %d\n", d);
 	
 	git_repository* repo = NULL;
 		
-	string_char(path, "/home/wubuntu/ext10/Projects/git-server/test.repo/");
+	string_char(path, "/home/wubuntu/ext10/Projects/git-server/testing_repos/test.repo/");
 	
 	if(git_init(&repo, path->str) == GIT_REPO_INITIALIZED){						
-		git_get_refs(http, repo, http->refs, path);
+		save_packfile(http, repo, path, "/home/wubuntu/test.txt");
+		
+		//git_get_refs(http, repo, http->refs, path);
 		//git_set_refs(repo, http->refs);
 		
-		printf("%s\n", http->refs->str);
-		string_debug(http->refs);
+		//printf("%s\n", http->refs->str);
+		//string_debug(http->refs);
 		
 		/*unsigned char* x = (unsigned char*)http->refs->str;
 		int i;
@@ -165,8 +181,6 @@ int main(){
 		}		
 		
 		printf("\n\n\n");*/
-		
-		//handle_save_packfile(http, repo, path, "/home/wubuntu/test.txt");
 	} else {
 		
 	}

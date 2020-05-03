@@ -150,7 +150,7 @@ uint8_t parser_packhex(g_http_resp* http, char *file, g_str_t* packfile){
 			//printf("\n");
 			
 		} else if (start_pack == 0 && temp->str[i] == '0'){
-			if(i+3 < sz && temp->str[i+1] == '0' && temp->str[i+2] == '0' && temp->str[i+3] == '0'){
+			if(i+3 < sz && temp->str[i+1] == '0' && temp->str[i+2] == '0' && temp->str[i+3] == '0' && temp->str[i+4] == 'P'){
 				i += 3;
 				//printf("Detected zeros at %d: ", copy_bytes);
 				
@@ -200,12 +200,16 @@ static uint8_t parser_pushline(g_http_resp* http, g_str_t* line){
 	
 	//string_debug(line);
 		
-	string_copy_bytes(new_oid, line, 4, 40);
-	string_copy_bytes(old_oid, line, 45, 40);
+	string_copy_bytes(old_oid, line, 4, 40);
+	string_copy_bytes(new_oid, line, 45, 40);
 	uint16_t c = string_copy_bytes_stop_at_char(ref, line, 86, '\0');
-	string_copy_bytes(caps, line, 88+c, line->size-88-c-1);	
 		
-	parser_capabilities(http, caps);	
+	if(88+c < line->size){
+		string_copy_bytes(caps, line, 88+c, line->size-88-c-1);	
+		parser_capabilities(http, caps);	
+	} else {
+		string_append(caps,"empty");
+	}
 		
 	add_push(http, old_oid->str, new_oid->str, ref->str, caps->str);
 					

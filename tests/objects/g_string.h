@@ -25,6 +25,7 @@ uint8_t string_hexsign_exclude_sign(g_str_t* gstr);
 uint8_t string_append(g_str_t* gstr, char* formated_str, ...);
 uint8_t string_append_hexsign(g_str_t* gstr, char* formated_str, ...);
 uint8_t string_copy_bytes(g_str_t* gstr1, g_str_t* gstr2, int start, int length);
+uint8_t string_copy_char_nullterminate(g_str_t* gstr1, char* str, int size);
 uint16_t string_copy_bytes_stop_at_char(g_str_t* gstr1, g_str_t* gstr2, int start, char end);
 uint8_t string_save_to_file_binary(g_str_t* data, char* file);
 uint8_t string_save_to_file(g_str_t* data, char* file);

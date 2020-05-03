@@ -197,6 +197,14 @@ uint8_t string_copy_bytes(g_str_t* gstr1, g_str_t* gstr2, int start, int length)
 	return 0;
 }
 
+uint8_t string_copy_char_nullterminate(g_str_t* gstr1, char* str, int size){
+	string_allocate(gstr1, size+1);
+	memcpy(gstr1->str, str, size);
+	*(gstr1->str+size) = '\0';
+	
+	return 0;
+}
+
 uint16_t string_copy_bytes_stop_at_char(g_str_t* gstr1, g_str_t* gstr2, int start, char end){
 	size_t i = 0;
 	

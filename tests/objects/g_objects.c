@@ -8,6 +8,8 @@
 #include "g_http.h"
 #include "g_parser.h"
 #include "g_objects.h"
+#include "g_auth.h"
+#include "hiredis.h"
 
 static int index_cb(const git_indexer_progress *stats, void *data);
 
@@ -110,11 +112,16 @@ void get_packfile(g_http_resp* http, git_repository* repo, g_str_t* path_repo, c
 	
 	int i, error;
 	g_str_t* path_to_newpack = string_init();
+	g_str_t* temp = string_init();
 
 	for (i=0;i<http->refs_sz[0];i++){
 		error = git_create_packfile_from_repo(http->pack, http->message, repo, http->refs_w[i]->str, path_repo);
-				
+		
 		if (error == 0){
+			string_free(temp);
+			string_append(temp, "[PULL] Pulling ref: %s.", http->refs_w[i]->str);
+			git_log(http, temp->str);		
+				
 			printf("Commit found in this repo: %s && pack buffer created!\n", http->refs_w[i]->str);
 			string_debug(http->pack);
 			break;
@@ -126,6 +133,7 @@ void get_packfile(g_http_resp* http, git_repository* repo, g_str_t* path_repo, c
 	}
 	
 	string_clean(path_to_newpack);
+	string_clean(temp);
 }
 
 int8_t git_commit_packfile(g_str_t* packfile, g_str_t* packdir, g_str_t* new_head, git_repository* repo){			
@@ -169,8 +177,8 @@ int8_t git_commit_packfile(g_str_t* packfile, g_str_t* packdir, g_str_t* new_hea
 	if ((error = git_indexer_commit(idx, &stats)) < 0)
 		goto cleanup;
 
-	printf("\rIndexing %u of %u\n", stats.indexed_objects, stats.total_objects);
-
+	printf("\rIndexed %u of %u\n", stats.indexed_objects, stats.total_objects);
+	
 	git_oid_fmt(hash, git_indexer_hash(idx));
 	puts(hash);
 
@@ -188,13 +196,14 @@ void save_packfile(g_http_resp* http, git_repository* repo, g_str_t* path, char*
 	g_str_t* hex_packfile = string_init();	
 	g_str_t* packdir = string_init();
 	g_str_t* new_head = string_init();
+	g_str_t* temp = string_init();
 				
 	string_add(hex_packfile, path->str);
 	string_add(packdir, path->str);
 		
 	parser_packhex(http, request_file, hex_packfile);
 	int error = git_commit_packfile(hex_packfile, packdir, new_head, repo);
-		
+			
 	if(error == 0){
 		g_str_t* path_head = string_init();
 		
@@ -211,11 +220,23 @@ void save_packfile(g_http_resp* http, git_repository* repo, g_str_t* path, char*
 		string_append_hexsign(http->message,"ok %s\n", http->push_refs[0]->str);
 		string_append(http->message, "00000000");
 		string_hexsign_exclude_sign(http->message);
+		
+		string_debug(http->push_new_oids[0]);
+		string_debug(http->push_old_oids[0]);
+		
+		string_free(temp);
+		string_append(temp, "[PUSH] Ref: %s, New oid: %s, old oid: %s.", 
+									http->push_refs[0]->str, http->push_new_oids[0]->str, http->push_old_oids[0]->str);
+									
+		string_debug(temp);						
+									
+		git_log(http, temp->str);
 	}
 	
 	string_clean(hex_packfile);
 	string_clean(packdir);
 	string_clean(new_head);
+	string_clean(temp);
 }
 
 static int index_cb(const git_indexer_progress *stats, void *data){
