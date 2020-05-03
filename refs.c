@@ -132,7 +132,7 @@ void git_set_refs(git_repository* r, g_str_t* grefs)
 		hex[GIT_OID_HEXSZ] = 0;
 		git_object_lookup(&obj, r, oid, GIT_OBJ_ANY);
 		
-		string_append_hexsign(grefs, "%s %s%creport-status delete-refs side-band-64k\n", hex, git_reference_name(ref), '\0');
+		string_append_hexsign(grefs, "%s %s%creport-status delete-refs\n", hex, git_reference_name(ref), '\0');
 										
 		git_reference_free(ref);
 		

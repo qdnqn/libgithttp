@@ -159,7 +159,7 @@ int8_t git_commit_packfile(g_str_t* packfile, g_str_t* packdir, g_str_t* new_hea
 
 	do {
 		read_bytes = read(fd, buf, sizeof(buf));
-		if (read_bytes < 0)
+		if (read_bytes <= 0)
 			break;
 
 		if ((error = git_indexer_append(idx, buf, read_bytes, &stats)) < 0)
@@ -215,11 +215,11 @@ void save_packfile(g_http_resp* http, git_repository* repo, g_str_t* path, char*
 		string_debug(http->push_new_oids[0]);
 		string_debug(path_head);
 		
-		string_append(http->message,"\1");		
+		//string_append(http->message,"\1");		
 		string_append_hexsign(http->message,"unpack ok\n");
 		string_append_hexsign(http->message,"ok %s\n", http->push_refs[0]->str);
 		string_append(http->message, "00000000");
-		string_hexsign_exclude_sign(http->message);
+		//string_hexsign_exclude_sign(http->message);
 		
 		string_debug(http->push_new_oids[0]);
 		string_debug(http->push_old_oids[0]);
@@ -227,8 +227,6 @@ void save_packfile(g_http_resp* http, git_repository* repo, g_str_t* path, char*
 		string_free(temp);
 		string_append(temp, "[PUSH] Ref: %s, New oid: %s, old oid: %s.", 
 									http->push_refs[0]->str, http->push_new_oids[0]->str, http->push_old_oids[0]->str);
-									
-		string_debug(temp);						
 									
 		git_log(http, temp->str);
 	}
