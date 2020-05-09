@@ -17,9 +17,9 @@ gh_broker* broker_init(g_http_resp* http){
 	
 	broker_temp->channel = string_init();
 	broker_temp->message = string_init();
-		
-	broker_temp->redis = http->redis;
 	
+	broker_temp->redis = http->redis;
+			
 	return broker_temp;
 }
 
@@ -31,7 +31,9 @@ void broker_clean(gh_broker* broker){
 }
 
 void broker_reply_clean(gh_broker* broker){
+	#if defined(GH_USEBROOKER)
 	freeReplyObject(broker->reply);
+	#endif
 }
 
 void broker_channel(gh_broker* broker, char* channel, ...){

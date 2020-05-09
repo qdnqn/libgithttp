@@ -5,21 +5,25 @@ Library can process http request containing git push request and process thin pa
 
 It can process http request headers and body from git client, handle negotiate process, and generate appropriate response so you can send it back to git client. Although you will need medium for http transfer. There's an example of creating custom nginx module [nginx-git-module](https://github.com/qdnqn/nginx-git-module) to handle HTTP transfer. You can use any other http server you prefer for handling http transfer of data.  
 ## Building library
-```javascript
+```
 git clone https://github.com/qdnqn/http-libgit2
 cd http-libgit2
 make
 ```
+#### Linking
+```
+gcc myprogram.c -Ipath/to/libgit_header_files -Lpath/to/ligbgit.so_dir -llibgithttp
+```
 #### Dependencies
 
-libgithttp library is using libgit2 (https://libgit2.org/) and hiredis (https://github.com/redis/hiredis) (optional) for brokering between libgit2 and git controller (https://github.com/qdnqn/http-libgit2-controller).
+libgithttp library is using libgit2 (https://libgit2.org/) and hiredis (https://github.com/redis/hiredis) (optional) for brokering between libgit2 and git controller (https://github.com/qdnqn/libgithttp-controller).
 
-If you don't want brokering service you need to remote USEBROKER from gh_config.h and compile.
+If you don't want brokering service you need to remove USEBROKER from gh_config.h and compile.
 
 You can reference yourself to Makefile in repo for compiling instructions. You need to take in consideration that Makefile in repo uses brokering service if you wish to compile libgithttp with it.
 
-#### How to use library?
-You can find example code for custom ngxin module(https://github.com/qdnqn/nginx-git-module). 
+#### Pull example
+You can find example code for custom ngxin module (https://github.com/qdnqn/nginx-git-module). 
 
 Here is basic example of code needed for git pull of specific commit.
 ```c
@@ -34,10 +38,13 @@ Here is basic example of code needed for git pull of specific commit.
 
 int main(){
     g_str_t* path = string_init();
+    g_str_t* username = string_init();
+
     string_add(path, "absolute path to your repo directory");
-    
+    string_add(username, "guest");
+
     g_http_resp* http = NULL;
-    g_http = response_init(username, repo_c, NULL, 1);
+    g_http = response_init(username, path, NULL, 1);
 
     git_repository* repo;
     
@@ -47,17 +54,58 @@ int main(){
     
     get_packfile(http, repo, path, "request.txt");
     string_debug(http->pack);
+
+    string_clean(path);
+    string_clean(username);
     
     return 0;
 }
 ```
 Where requests.txt file contains
 ```
-POST $GIT_URL/git-upload-pack HTTP/1.0
-Content-Type: application/x-git-upload-pack-request
-
-0032want 0a53e9ddeaddad63ad106860237bbf53411d11a7\n
-0032have 441b40d833fdfa93eb2908e52742248faf0ee993\n
-0000
+0032want bdd6ceb415a8f5cfbecf0ed64310309c7880e1b8
+00000009done
 ```
-Program above will store packfile for 0a53e9ddeaddad63ad106860237bbf53411d11a7 in http->pack with needed data.
+Response in http->pack will contain packfile generated from current HEAD in your repository:
+```
+0008NAK
+PACK
+.... CONTENT HERE
+```
+#### Push example
+```c
+#include "git2.h"           // include libgit2.h file(libgit2 library)
+#include "gh_init.h"
+#include "gh_string.h"
+#include "gh_http.h"
+#include "gh_parser.h"
+#include "gh_objects.h"
+#include "gh_auth.h"
+#include "gh_refs.h"
+
+int main(){
+    g_str_t* path = string_init();
+    g_str_t* username = string_init();
+
+    string_add(path, "absolute path to your repo directory");
+    string_add(username, "guest");
+
+    g_http_resp* http = NULL;
+    g_http = response_init(username, path, NULL, 1);
+
+    git_repository* repo;
+    
+    if(git_init(&repo, path->str) == GIT_REPO_FAILED) {
+      return 0;
+    }
+    
+    save_packfile(http, repo, path, "request.txt");
+    string_debug(http->pack);
+
+    string_clean(path);
+    string_clean(username);
+    
+    return 0;
+}
+```
+Assumingly you already captured git push request in reqest.txt code above will process it and apply to your git repository.

@@ -6,17 +6,17 @@
 
 #include "gh_config.h"
 
-#if defined(GH_USEBROOKER)
+#if defined (GH_USEBROOKER)
 #include "hiredis.h"
 #endif
 
 #include "gh_http.h"
 
-typedef struct GH_BROKER {
+typedef struct BROKER {
 	g_str_t *channel;
 	g_str_t *message;
 	
-	#if defined (GH_USEBROOKER)
+	#if defined(GH_USEBROOKER)
 		redisContext *redis;
 		redisReply *reply;
 	#endif
