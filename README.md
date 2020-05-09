@@ -11,7 +11,7 @@ You can find working code for custom ngxin module (https://github.com/qdnqn/ngin
 ## Building library
 ```
 # Assuming you have libgit2 compiled in directory ../libgit2/build and
-# hiredis in directory ../redis/ (If you don't want brokering just delete from LIBS in makefile)
+# hiredis in directory ../redis/ (If you don't want brokering(See brokering section) just delete from LIBS in makefile)
 # otherwise just update LIBS = -I. -I../nginx/src/core -I../redis/ -L../libgit2/build/ -lgit2 -L../redis/ -lhiredis
 # to configuration you have on your machine.
 
@@ -31,6 +31,45 @@ If you don't want brokering service you need to remove USEBROKER from gh_config.
 
 You can reference yourself to Makefile in repo for compiling instructions. You need to take in consideration that Makefile in repo uses brokering service if you wish to compile libgithttp with it.
 
+#### Brokering
+What's the thing about brokering? Well library can publish data on redis when some event occurs. By event I mean push or pull. So if you need to trigger some action after these events occur you can easily do that. Sibling of this library is [libgithttp-controller](https://github.com/qdnqn/libgithttp-controller). Refer to that link for more information about brokering.
+
+
+If you don't wish brokering enabled you need to remove constant USEBROKER grom gh_config.h.
+### Authentication
+Authentication is not possible. It is possible to transfer authentication on some other agent if you want to implement it. But when authentication is enabled library uses redis for confirming that specific user have rights to do actions on specific repository in this format:
+```redis
+HGETALL username:repo_name 
+```
+If found element in a format like above actions will be allowed. Also you need to implement your logic for allowing or disabling actions based on user level.
+
+
+Example is given here (Snippet taken from [nginx-git-module](https://github.com/qdnqn/nginx-git-module)): 
+```
+g_str_t* username = string_init();
+redisContext *c = NULL;
+
+if(git_config->auth == 1){
+    struct timeval timeout = { 1, 500000 }; // 1.5 seconds
+    c = redisConnectWithTimeout((char*)git_redis_host.data, git_config->redis_port, timeout);
+    
+    string_copy_char_nullterminate(username, (char*)r->headers_in.user.data, r->headers_in.user.len);
+    
+    g_http = response_init(username, repo_c, c, 1); // User logging level
+    r->http_r = g_http;
+} else {
+    string_append(username,"guest");
+    
+    g_http = response_init(username, repo_c, c, 0);  // Guest logging level
+    r->http_r = g_http;
+}
+
+allowed = authenticate(g_http);
+
+if(allowed != ALLOWED_USER && allowed != ALLOWED_GUEST){    
+    return NGX_HTTP_FORBIDDEN;
+}
+```
 #### Pull example
 Here is basic example of code needed for git pull of specific commit.
 ```c
@@ -51,7 +90,7 @@ int main(){
     string_add(username, "guest");
 
     g_http_resp* http = NULL;
-    g_http = response_init(username, path, NULL, 1);
+    g_http = response_init(username, path, NULL, 0);        // 0 means no auth, no logging enabled.
 
     git_repository* repo;
     
@@ -107,7 +146,7 @@ int main(){
     string_add(username, "guest");
 
     g_http_resp* http = NULL;
-    g_http = response_init(username, path, NULL, 1);
+    g_http = response_init(username, path, NULL, 0);
 
     git_repository* repo;
     
