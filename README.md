@@ -7,6 +7,11 @@ Library can process http request containing git push request and process thin pa
 It can process http request headers and body from git client, handle negotiate process, and generate appropriate response so you can send it back to git client. Although you will need medium for http transfer. There's an example of creating custom nginx module [nginx-git-module](https://github.com/qdnqn/nginx-git-module) to handle HTTP transfer. You can use any other http server you prefer for handling http transfer of data.  
 ## Building library
 ```
+# Assuming you have libgit2 compiled in directory ../libgit2/build and
+# hiredis in directory ../redis/ (If you don't want brokering just delete from LIBS in makefile)
+# otherwise just update LIBS = -I. -I../nginx/src/core -I../redis/ -L../libgit2/build/ -lgit2 -L../redis/ -lhiredis
+# to configuration you have on your machine.
+
 git clone https://github.com/qdnqn/http-libgit2
 cd libgithttp
 make
