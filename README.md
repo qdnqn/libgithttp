@@ -1,3 +1,4 @@
+
 # http-libgit2
 C library providing git http transfer processing using libgit2. This library provides no http interface to world. Instead you can feed it with http request data retrieved from other source in text/binary file form and process it to get desired output. 
 
@@ -123,14 +124,19 @@ Be aware that git push request sent over http is in binary format so you should 
 Most crucial functions can be found in gh_refs.c and gh_objects.c.
 
 File gh_refs.c contains functions for processing request with header content-types:
-1. ```application/x-git-upload-pack-advertisement -> git_get_refs(g_http_resp*, git_repository*, g_str_t*(g_http->refs), g_str_t*(path_to_repo));```
-2. ```application/x-git-receive-pack-advertisement -> git_set_refs(git_repository*, g_str_t*(g_http->refs));```
+1. <small>```application/x-git-upload-pack-advertisement -> git_get_refs(g_http_resp*, git_repository*, g_str_t*(g_http->refs), g_str_t*(path_to_repo));```</small>
+2.<small> ```application/x-git-receive-pack-advertisement -> git_set_refs(git_repository*, g_str_t*(g_http->refs));```</small>
+
+
 
 File gh_objects.c contains functions for processing request with header content-types:
-1. ```application/x-git-upload-pack-result -> get_packfile(g_http_resp*, git_repository*, g_str_t*(path_to_repo), g_str_t*(path_to_request_file));```
-2. ```application/x-git-receive-pack-result -> save_packfile(g_http_resp*, git_repository*, g_str_t*(path_to_repo), g_str_t*(path_to_request_file));```
+1.<small> ```application/x-git-upload-pack-result -> get_packfile(g_http_resp*, git_repository*, g_str_t*(path_to_repo), g_str_t*(path_to_request_file));```</small>
+2.<small> ```application/x-git-receive-pack-result -> save_packfile(g_http_resp*, git_repository*, g_str_t*(path_to_repo), g_str_t*(path_to_request_file));```<small>
 
-If you are interested how is implemented packfile processing (and having trouble finding information on the internet as I had) you can refer yourself to gh_objects.c and section Useful links also!).
+If you are interested how is implemented packfile processing (and having trouble finding information on the internet as I had) you can refer yourself to gh_objects.c and section Useful links also!.
+
+
+
 There you can find functions for:
 1. Generating packfile for git repository
 2. Applying pack file to git repository(Fixing thin pack)
