@@ -125,13 +125,13 @@ Most crucial functions can be found in gh_refs.c and gh_objects.c.
 
 File gh_refs.c contains functions for processing request with header content-types:
 1. <small>```application/x-git-upload-pack-advertisement -> git_get_refs(g_http_resp*, git_repository*, g_str_t*(g_http->refs), g_str_t*(path_to_repo));```</small>
-2.<small> ```application/x-git-receive-pack-advertisement -> git_set_refs(git_repository*, g_str_t*(g_http->refs));```</small>
+2. <small> ```application/x-git-receive-pack-advertisement -> git_set_refs(git_repository*, g_str_t*(g_http->refs));```</small>
 
 
 
 File gh_objects.c contains functions for processing request with header content-types:
-1.<small> ```application/x-git-upload-pack-result -> get_packfile(g_http_resp*, git_repository*, g_str_t*(path_to_repo), g_str_t*(path_to_request_file));```</small>
-2.<small> ```application/x-git-receive-pack-result -> save_packfile(g_http_resp*, git_repository*, g_str_t*(path_to_repo), g_str_t*(path_to_request_file));```<small>
+1. <small> ```application/x-git-upload-pack-result -> get_packfile(g_http_resp*, git_repository*, g_str_t*(path_to_repo), g_str_t*(path_to_request_file));```</small>
+2. <small> ```application/x-git-receive-pack-result -> save_packfile(g_http_resp*, git_repository*, g_str_t*(path_to_repo), g_str_t*(path_to_request_file));```<small>
 
 If you are interested how is implemented packfile processing (and having trouble finding information on the internet as I had) you can refer yourself to gh_objects.c and section Useful links also!.
 
