@@ -123,21 +123,33 @@ Be aware that git push request sent over http is in binary format so you should 
 Most crucial functions can be found in gh_refs.c and gh_objects.c.
 
 File gh_refs.c contains functions for processing request with header content-types:
-1. application/x-git-upload-pack-advertisement -> git_get_refs(g_http_resp*, git_repository*, g_str_t*(g_http->refs), g_str_t*(path_to_repo));
-2. application/x-git-receive-pack-advertisement -> git_set_refs(git_repository*, g_str_t*(g_http->refs));
-
+1. ```
+application/x-git-upload-pack-advertisement -> git_get_refs(g_http_resp*, git_repository*, g_str_t*(g_http->refs), g_str_t*(path_to_repo));```
+2. ```
+application/x-git-receive-pack-advertisement -> git_set_refs(git_repository*, g_str_t*(g_http->refs));```
 File gh_objects.c contains functions for processing request with header content-types:
-1. application/x-git-upload-pack-result -> get_packfile(g_http_resp*, git_repository*, g_str_t*(path_to_repo), g_str_t*(path_to_request_file));
-2. application/x-git-receive-pack-result -> save_packfile(g_http_resp*, git_repository*, g_str_t*(path_to_repo), g_str_t*(path_to_request_file));
+1. ```application/x-git-upload-pack-result -> get_packfile(g_http_resp*, git_repository*, g_str_t*(path_to_repo), g_str_t*(path_to_request_file));```
+2. ```application/x-git-receive-pack-result -> save_packfile(g_http_resp*, git_repository*, g_str_t*(path_to_repo), g_str_t*(path_to_request_file));```
 
-If you are interested how is implemented packfile processing you can refer yourself to gh_objects.c.
+If you are interested how is implemented packfile processing (If you are interested in packfile processsing and having trouble finding information on the internet as I had) you can refer yourself to gh_objects.c.
 There you can find functions for:
 1. Generating packfile for git repository
 2. Applying pack file to git repository(Fixing thin pack)
 3. Getting commits from packfile(Function -> verify_pack)
 
-## Future plans
-Project is new born as side library doing my homework so I'm planning to work on it more in future.
+## Useful links
+1. https://libgit2.org/libgit2/#HEAD
+2. https://git-scm.com/docs/http-protocol
+3. https://mincong.io/2018/05/04/git-and-http/
+4. https://git-scm.com/book/en/v2/Git-Internals-Packfiles
+5. https://github.com/libgit2/libgit2/blob/2376cd26226771dcf8ef5dfd04c83a50c50bf3d4/tests/pack/indexer.c
+6. https://github.com/git/git/blob/9bfa0f9be3e718f701200a242ea04259a4dc4dfc/Documentation/technical/protocol-v2.txt
+7. https://codewords.recurse.com/issues/three/unpacking-git-packfiles
+8. https://repo.or.cz/w/git.git?a=blob;f=Documentation/technical/pack-format.txt;h=1803e64e465fa4f8f0fe520fc0fd95d0c9def5bd;hb=HEAD
+9. https://github.com/git/git/blob/master/Documentation/technical/pack-heuristics.txt (IRC chat between linus and njs)
+
+## Future plans & Motivation
+Project is new born as side library doing my homework project, for continous integration, so I'm planning to work on it more in future.
 ## License
 Copyright 2020 adnn.selimovic@gmail.com
 
