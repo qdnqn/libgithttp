@@ -123,10 +123,9 @@ Be aware that git push request sent over http is in binary format so you should 
 Most crucial functions can be found in gh_refs.c and gh_objects.c.
 
 File gh_refs.c contains functions for processing request with header content-types:
-1. ```
-application/x-git-upload-pack-advertisement -> git_get_refs(g_http_resp*, git_repository*, g_str_t*(g_http->refs), g_str_t*(path_to_repo));```
-2. ```
-application/x-git-receive-pack-advertisement -> git_set_refs(git_repository*, g_str_t*(g_http->refs));```
+1. ```application/x-git-upload-pack-advertisement -> git_get_refs(g_http_resp*, git_repository*, g_str_t*(g_http->refs), g_str_t*(path_to_repo));```
+2. ```application/x-git-receive-pack-advertisement -> git_set_refs(git_repository*, g_str_t*(g_http->refs));```
+
 File gh_objects.c contains functions for processing request with header content-types:
 1. ```application/x-git-upload-pack-result -> get_packfile(g_http_resp*, git_repository*, g_str_t*(path_to_repo), g_str_t*(path_to_request_file));```
 2. ```application/x-git-receive-pack-result -> save_packfile(g_http_resp*, git_repository*, g_str_t*(path_to_repo), g_str_t*(path_to_request_file));```
