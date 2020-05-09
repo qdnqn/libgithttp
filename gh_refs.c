@@ -172,7 +172,7 @@ int main(){
 	git_repository *repo = NULL;
 	
 	if(git_init(&repo, path->str) == GIT_REPO_INITIALIZED){						
-		save_packfile(http, repo, path, "/home/wubuntu/test.txt");
+		//save_packfile(http, repo, path, "/home/wubuntu/test.txt");
 		
 		//git_get_refs(http, repo, http->refs, path);
 		//git_set_refs(repo, http->refs);

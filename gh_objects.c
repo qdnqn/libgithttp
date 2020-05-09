@@ -138,6 +138,7 @@ void get_packfile(g_http_resp* http, git_repository* repo, g_str_t* path_repo, c
 				broker_message(broker, "{\"message\": \"%s\", "
 															 "\"user\": \"%s\", "
 															 "\"repo\": \"%s\", "
+															 "\"path_repo\": \"%s\", "
 															 "\"type\": \"%s\", "
 															 "\"ref_oid\": \"%s\", "
 															 "\"old_oid\": \"\", "
@@ -146,6 +147,7 @@ void get_packfile(g_http_resp* http, git_repository* repo, g_str_t* path_repo, c
 															 "Pulling from repository.", 
 																http->username->str, 
 																http->repo->str, 
+																path_repo->str,
 																"push", 
 																http->refs_w[i]->str);						 
 					 
@@ -272,14 +274,16 @@ void save_packfile(g_http_resp* http, git_repository* repo, g_str_t* path, char*
 			broker_message(broker, "{\"message\": \"%s\", "
 														 "\"user\": \"%s\", "
 														 "\"repo\": \"%s\", "
+														 "\"path_repo\": \"%s\", "
 														 "\"type\": \"%s\", "
 														 "\"ref_oid\": \"%s\", "
 														 "\"old_oid\": \"%s\", "
 														 "\"new_oid\": \"%s\", "
 														 "\"indexed_obj\": \"%d\"}",
-														 "Pulling from repository.", 
-															http->username->str, 
+														 "Pushing to repository.", 
+															http->username->str,
 															http->repo->str, 
+															path->str, 
 															"push", 
 															http->push_refs[0]->str, 
 															http->push_old_oids[0]->str, 

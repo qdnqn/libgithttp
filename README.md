@@ -15,7 +15,7 @@ You can find working code for custom ngxin module (https://github.com/qdnqn/ngin
 # otherwise just update LIBS = -I. -I../nginx/src/core -I../redis/ -L../libgit2/build/ -lgit2 -L../redis/ -lhiredis
 # to configuration you have on your machine.
 
-git clone https://github.com/qdnqn/http-libgit2
+git clone https://github.com/qdnqn/libgithttp
 cd libgithttp
 make
 ```
