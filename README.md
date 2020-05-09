@@ -37,10 +37,12 @@ int main(){
     string_add(path, "absolute path to your repo directory");
     
     g_http_resp* http = NULL;
+    g_http = response_init(username, repo_c, NULL, 1);
+
     git_repository* repo;
     
     if(git_init(&repo, path->str) == GIT_REPO_FAILED) {
-      return NGX_HTTP_BAD_REQUEST;
+      return 0;
     }
     
     get_packfile(http, repo, path, "request.txt");
