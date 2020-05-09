@@ -35,6 +35,12 @@ You can reference yourself to Makefile in repo for compiling instructions. You n
 What's the thing about brokering? Well library can publish data on redis when some event occurs. By event I mean push or pull. So if you need to trigger some action after these events occur you can easily do that. Sibling of this library is [libgithttp-controller](https://github.com/qdnqn/libgithttp-controller). Refer to that link for more information about brokering.
 
 
+
+When brokering is used log is saved to mongodb.
+
+
+
+
 If you don't wish brokering enabled you need to remove constant USEBROKER grom gh_config.h.
 ### Authentication
 Authentication is not possible. It is possible to transfer authentication on some other agent if you want to implement it. But when authentication is enabled library uses redis for confirming that specific user have rights to do actions on specific repository in this format:
