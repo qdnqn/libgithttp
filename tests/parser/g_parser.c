@@ -5,6 +5,7 @@
 
 #include "g_buffer.h"
 #include "g_string.h"
+#include "g_log.h"
 #include "g_http.h"
 
 static uint8_t parser_pushline(g_http_resp* http, g_str_t* line);
@@ -47,8 +48,11 @@ uint8_t parser_refs(g_http_resp* http, char *file){
 	ssize_t read;
 	
 	fp = fopen(file, "r");
-	if (fp == NULL)
+	
+	if (fp == NULL){
+			log(G_FILE, "Error opening file: ");			
 			return -1;
+	}
 	
 	g_str_t* det_zeros = string_init();
 	g_str_t* type = string_init();

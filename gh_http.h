@@ -3,32 +3,19 @@
 
 #include <stdlib.h>
 #include <stdarg.h>
-#include "g_buffer.h"
-#include "g_string.h"
+
+#include "gh_config.h"
+
+#if defined(GH_USEBROOKER)
 #include "hiredis.h"
+#endif
+
+#include "gh_buffer.h"
+#include "gh_string.h"
 
 #define REF_WANT	0
 #define REF_HAVE	1
 #define REF_ADVERT	2
-
-/*
-typedef struct HTTP_capability{
-	g_str_t* capabilities;
-	size_t caps_sz;
-} http_capblt;
-
-typedef struct HTTP_capability{
-	g_str_t* capabilities;
-	size_t caps_sz;
-} http_capblt;
-
-typedef struct HTTP_push {
-	g_str_t* old_oid;
-	g_str_t* new_oid;
-	g_str_t* ref;
-	http_capblt capbls;
-} http_push;
-*/
 
 typedef struct HTTP_response {
 	g_str_t* refs;
@@ -53,8 +40,9 @@ typedef struct HTTP_response {
 	
 	size_t push_sz[4];
 	
-	redisContext *redis;
-	redisReply *reply;	
+	#if defined(GH_USEBROOKER)
+		redisContext *redis;	
+	#endif
 	
 	uint8_t allowed;
 	uint8_t auth;
@@ -73,7 +61,7 @@ typedef struct HTTP_response {
 	g_str_t* symref;
 } g_http_resp;
 
-g_http_resp* response_init(g_str_t*, g_str_t*, redisContext*, uint8_t);
+g_http_resp* response_init(g_str_t*, g_str_t*, uint8_t);
 
 uint8_t add_ref_w(g_http_resp* http, char* id);
 uint8_t add_ref_h(g_http_resp* http, char* id);

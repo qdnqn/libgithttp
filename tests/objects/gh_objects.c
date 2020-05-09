@@ -2,15 +2,24 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
+
+#include "gh_config.h"
+
+#if defined(GH_USEBROOKER)
+#include "hiredis.h"
+#endif
+
 #include "git2.h"
 #include "git2/odb_backend.h"
-#include "git_init.h"
-#include "g_string.h"
-#include "g_http.h"
-#include "g_parser.h"
-#include "g_objects.h"
-#include "g_auth.h"
-#include "hiredis.h"
+
+#include "gh_init.h"
+#include "gh_string.h"
+#include "gh_http.h"
+#include "gh_parser.h"
+#include "gh_vectors.h"
+#include "gh_broker.h"
+#include "gh_objects.h"
+#include "gh_auth.h"
 
 static int index_cb(const git_indexer_progress *stats, void *data);
 static int foreach_cb(const git_oid *oid, void *data);
@@ -116,19 +125,35 @@ void get_packfile(g_http_resp* http, git_repository* repo, g_str_t* path_repo, c
 	
 	int i, error;
 	g_str_t* path_to_newpack = string_init();
-	g_str_t* temp = string_init();
 
 	for (i=0;i<http->refs_sz[0];i++){
 		error = git_create_packfile_from_repo(http->pack, http->message, repo, http->refs_w[i]->str, path_repo);
 		
 		if (error == 0){
-			string_free(temp);
-			string_append(temp, "{\"message\": \"%s\", \"user\": \"%s\", \"repo\": \"%s\", \"type\": \"%s\", \"ref_oid\": \"%s\", \"old_oid\": \"\", \"new_oid\": \"\"}", "Pulling from repository.", 
-													http->username->str, http->repo->str, "pull", http->refs_w[i]->str);
-			git_log(http, temp->str);		
+			#if defined(GH_USEBROOKER)
+				gh_broker* broker = broker_init(http);
 				
-			printf("Commit found in this repo: %s && pack buffer created!\n", http->refs_w[i]->str);
-			string_debug(http->pack);
+				broker_channel(broker, "%s.repo", http->repo->str);
+				
+				broker_message(broker, "{\"message\": \"%s\", "
+															 "\"user\": \"%s\", "
+															 "\"repo\": \"%s\", "
+															 "\"type\": \"%s\", "
+															 "\"ref_oid\": \"%s\", "
+															 "\"old_oid\": \"\", "
+															 "\"new_oid\": \"\", "
+															 "\"indexed_obj\": \"%d\"}",
+															 "Pulling from repository.", 
+																http->username->str, 
+																http->repo->str, 
+																"push", 
+																http->refs_w[i]->str);						 
+					 
+				broker->reply = redisCommand(broker->redis, "PUBLISH %s %s",	broker->channel->str, broker->message->str);											 
+						 
+				broker_reply_clean(broker);	
+				broker_clean(broker);
+			#endif
 			break;
 		} else if (error == -3) {
 			printf("Commit not found in this repo: %s\n", http->refs_w[i]->str);
@@ -138,7 +163,6 @@ void get_packfile(g_http_resp* http, git_repository* repo, g_str_t* path_repo, c
 	}
 	
 	string_clean(path_to_newpack);
-	string_clean(temp);
 }
 
 int8_t git_commit_packfile(g_str_t* packfile, g_str_t* packdir, g_str_t* new_head, git_repository* repo, g_str_t* idx_hash){			
@@ -196,12 +220,14 @@ int8_t git_commit_packfile(g_str_t* packfile, g_str_t* packdir, g_str_t* new_hea
 	
 	string_append(idx_hash, hash);
 	
+	git_odb_free(odb);
+	
 cleanup:
 	close(fd);
 	git_indexer_free(idx);
 		
 	string_add(new_head, hash);
-	remove(packfile->str);
+	remove(packfile->str);				// DELETE PACKFILE?
 			
 	return error;
 }
@@ -210,7 +236,6 @@ void save_packfile(g_http_resp* http, git_repository* repo, g_str_t* path, char*
 	g_str_t* hex_packfile = string_init();	
 	g_str_t* packdir = string_init();
 	g_str_t* new_head = string_init();
-	g_str_t* temp = string_init();
 	g_str_t* idx = string_init();
 				
 	string_add(hex_packfile, path->str);
@@ -237,25 +262,45 @@ void save_packfile(g_http_resp* http, git_repository* repo, g_str_t* path, char*
 		string_append(http->message, "00000000");
 		//string_hexsign_exclude_sign(http->message);
 		
-		string_debug(http->push_new_oids[0]);
-		string_debug(http->push_old_oids[0]);
+		string_clean(path_head);
 		
-		string_free(temp);									
-		string_append(temp, "{\"message\": \"%s\", \"user\": \"%s\", \"repo\": \"%s\", \"type\": \"%s\", \"ref_oid\": \"%s\", \"old_oid\": \"%s\", \"new_oid\": \"%s\", \"indexed_obj\": \"%d\"}", "Pushing to repository.", 
-									http->username->str, http->repo->str, "push", http->push_refs[0]->str, http->push_old_oids[0]->str, http->push_new_oids[0]->str, indexed_objects);
-		git_log(http, temp->str);	
+		#if defined(GH_USEBROOKER)
+			gh_broker* broker = broker_init(http);
+			
+			broker_channel(broker, "%s.repo", http->repo->str);		
+			
+			broker_message(broker, "{\"message\": \"%s\", "
+														 "\"user\": \"%s\", "
+														 "\"repo\": \"%s\", "
+														 "\"type\": \"%s\", "
+														 "\"ref_oid\": \"%s\", "
+														 "\"old_oid\": \"%s\", "
+														 "\"new_oid\": \"%s\", "
+														 "\"indexed_obj\": \"%d\"}",
+														 "Pulling from repository.", 
+															http->username->str, 
+															http->repo->str, 
+															"push", 
+															http->push_refs[0]->str, 
+															http->push_old_oids[0]->str, 
+															http->push_new_oids[0]->str, 
+															indexed_objects);						 
+					 
+			broker->reply = redisCommand(broker->redis, "PUBLISH %s %s",	broker->channel->str, broker->message->str);
+															
+			broker_reply_clean(broker);				
+			broker_clean(broker);
+		#endif
 	}
 	
 	string_clean(hex_packfile);
 	string_clean(packdir);
 	string_clean(new_head);
-	string_clean(temp);
 	string_clean(idx);
 }
 
 void verify_pack(g_http_resp* http, g_str_t* packdir, g_str_t* idx){
 	g_str_t* path = string_init();
-	g_str_t* temp = string_init();
 	
 	string_append(path, packdir->str);
 	string_append(path, "pack-%s.idx", idx->str);
@@ -272,21 +317,35 @@ void verify_pack(g_http_resp* http, g_str_t* packdir, g_str_t* idx){
 	
 	char hash[GIT_OID_HEXSZ+1];
 	
+	#if defined(GH_USEBROOKER)
+			gh_broker* broker = broker_init(http);
+			broker_channel(broker, "%s.repo", http->repo->str);
+	#endif
+	
 	for(int i=0; i<commits.size; i++){
 		git_oid_tostr(hash, GIT_OID_HEXSZ+1, commits.oid[i]);
-		
-		string_free(temp);									
-		string_append(temp, "{\"type\": \"%s\", \"parent_oid\": \"%s\", \"child_oid\": \"%s\"}",
-											  "child-commit", http->push_new_oids[0]->str, hash);
-		git_log(http, temp->str);	
+				
+		#if defined(GH_USEBROOKER)	
+			broker_message(broker, "{\"type\": \"%s\", \"parent_oid\": \"%s\", \"child_oid\": \"%s\"}",
+															"child-commit", 
+															http->push_new_oids[0]->str, 
+															hash);
+															
+			broker->reply = redisCommand(broker->redis, "PUBLISH %s %s", broker->channel->str, broker->message->str);
+			
+			broker_reply_clean(broker);													
+		#endif
 	}
+		
+	#if defined(GH_USEBROOKER)
+		broker_clean(broker);
+	#endif
 				
-	git_commit_vector_clean(&commits);			
-				
+	git_commit_vector_clean(&commits);	
+			
 	git_odb_free(odb);
 	git_repository_free(repo);
 		
-	string_clean(temp);
 	string_clean(path);
 }
 

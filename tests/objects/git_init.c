@@ -45,3 +45,12 @@ void git_commit_insert(commit_vector* vec, git_oid oid){
 	}
 }
 
+void git_commit_vector_clean(commit_vector* vec){
+	for(int i=0; i<vec->size; i++){
+		free(vec->oid[i]);
+	}
+	
+	free(vec->oid);
+	vec->size = 0;
+}
+

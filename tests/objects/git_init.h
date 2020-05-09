@@ -17,6 +17,7 @@ typedef struct GIT_Vector {
 } commit_vector;
 
 void git_commit_insert(commit_vector* vec, git_oid oid);
+void git_commit_vector_clean(commit_vector* vec);
 
 uint8_t git_init(git_repository **repo, char *path);
 void git_deinit(git_repository* repo);

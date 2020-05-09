@@ -2,8 +2,10 @@
 #include <stdlib.h>
 #include <inttypes.h>
 #include <string.h>
-#include "g_string.h"
-#include "g_buffer.h"
+
+#include "gh_config.h"
+#include "gh_string.h"
+#include "gh_buffer.h"
 
 g_buff_t* buffer_init(){
 	g_buff_t* temp = malloc(sizeof(g_buff_t));

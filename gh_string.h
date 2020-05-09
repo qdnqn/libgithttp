@@ -2,7 +2,10 @@
 #define G_STRING_H
 
 #include <inttypes.h>
-#include "g_buffer.h"
+
+#include "gh_config.h"
+
+#include "gh_buffer.h"
 
 typedef struct String {
 	char* str;

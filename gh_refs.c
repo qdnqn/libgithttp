@@ -1,15 +1,17 @@
 #include <stdio.h>
 #include <string.h>
+
 #include "git2.h"
 
-#include "git_init.h"
-#include "g_string.h"
-#include "g_http.h"
-#include "g_parser.h"
-#include "g_objects.h"
-#include "g_auth.h"
-#include "refs.h"
-#include "hiredis.h"
+#include "gh_config.h"
+
+#include "gh_init.h"
+#include "gh_string.h"
+#include "gh_http.h"
+#include "gh_parser.h"
+#include "gh_objects.h"
+#include "gh_auth.h"
+#include "gh_refs.h"
 
 void git_get_refs(g_http_resp* http, git_repository* repo, g_str_t* grefs, g_str_t* path){
 	git_reference_iterator *refs = NULL;
@@ -84,16 +86,18 @@ uint8_t isHead(g_str_t* path, char* ref_name, char* hex){
 	string_concate(temp, path);
 	string_append(temp, ref_name);
 	
-	string_load_from_file_bytes(hex_fromfile, temp->str, 40);
-				
-	if(strcmp(hex_fromfile->str, hex) == 0){
-		string_clean(temp);
-		string_clean(hex_fromfile);
-				
-		return 1;
+	if(string_load_from_file_bytes(hex_fromfile, temp->str, 40) == 0){
+		if(strcmp(hex_fromfile->str, hex) == 0){
+			string_clean(temp);
+			string_clean(hex_fromfile);
+					
+			return 1;
+		} else {
+			return 0;
+		}	
 	} else {
-		return 0;
-	}	
+			return 0;
+	}
 }
 
 void git_set_refs(git_repository* r, g_str_t* grefs)
@@ -155,10 +159,8 @@ int main(){
 	
 	string_add(username, "test");
 	string_add(repox, "test");
-	struct timeval timeout = { 1, 500000 }; // 1.5 seconds
-	redisContext *c = redisConnectWithTimeout("localhost", 6379, timeout);
-	
-	g_http_resp* http = response_init(username, repox, c, 1);
+
+	g_http_resp* http = response_init(username, repox, 1);
 	g_str_t* path = string_init();
 	
 	uint8_t d = authenticate(http);
@@ -170,7 +172,7 @@ int main(){
 	git_repository *repo = NULL;
 	
 	if(git_init(&repo, path->str) == GIT_REPO_INITIALIZED){						
-		//save_packfile(http, repo, path, "/home/wubuntu/test.txt");
+		save_packfile(http, repo, path, "/home/wubuntu/test.txt");
 		
 		//git_get_refs(http, repo, http->refs, path);
 		//git_set_refs(repo, http->refs);
@@ -189,7 +191,10 @@ int main(){
 		
 	}
 	
+	string_clean(username);
+	string_clean(repox);
 	string_clean(path);
+	
 	response_clean(http);
 	git_deinit(repo);
 	

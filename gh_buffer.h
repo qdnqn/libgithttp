@@ -3,6 +3,8 @@
 
 #include <inttypes.h>
 
+#include "gh_config.h"
+
 typedef struct Buffer {
 	char* buff;
 	size_t size;

@@ -3,10 +3,12 @@
 #include <stdarg.h>
 #include <string.h>
 
-#include "g_buffer.h"
-#include "g_string.h"
-#include "g_log.h"
-#include "g_http.h"
+#include "gh_config.h"
+
+#include "gh_buffer.h"
+#include "gh_string.h"
+#include "gh_log.h"
+#include "gh_http.h"
 
 static uint8_t parser_pushline(g_http_resp* http, g_str_t* line);
 
@@ -50,7 +52,7 @@ uint8_t parser_refs(g_http_resp* http, char *file){
 	fp = fopen(file, "r");
 	
 	if (fp == NULL){
-			log(G_FILE, "Error opening file: ");			
+			gh_log(G_FILE, "Error opening file: ");			
 			return -1;
 	}
 	

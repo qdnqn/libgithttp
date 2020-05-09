@@ -3,15 +3,19 @@
 #include <stdarg.h>
 #include <string.h>
 
-#include "g_buffer.h"
-#include "g_string.h"
-#include "g_http.h"
+#include "gh_config.h"
 
+#if defined(GH_USEBROOKER)
 #include "hiredis.h"
+#endif
+
+#include "gh_buffer.h"
+#include "gh_string.h"
+#include "gh_http.h"
 
 static void string_free_array(g_str_t** array, size_t* size);
 
-g_http_resp* response_init(g_str_t* username, g_str_t* repo, redisContext* context, uint8_t auth){
+g_http_resp* response_init(g_str_t* username, g_str_t* repo, uint8_t auth){
 	g_http_resp* temp = malloc(sizeof(g_http_resp));
 	
 	temp->refs = string_init();
@@ -22,10 +26,14 @@ g_http_resp* response_init(g_str_t* username, g_str_t* repo, redisContext* conte
 	temp->username = string_init();
 	temp->repo = string_init();
 	
-	temp->redis = context;
+	#if defined(GH_USEBROOKER)
+		struct timeval timeout = { 1, 500000 }; // 1.5 seconds
+		temp->redis = redisConnectWithTimeout(GH_BROKERHOST, GH_BROKERPORT, timeout);
+	#endif
+	
 	temp->auth = auth;
 	temp->allowed = 0;
-	
+		
 	string_append(temp->username, username->str);
 	string_append(temp->repo, repo->str);
 	
@@ -81,7 +89,9 @@ void response_clean(g_http_resp* http){
 		string_clean(http->agent);
 		string_clean(http->symref);
 		
-		redisFree(http->redis);
+		#if defined(GH_USEBROOKER)
+			redisFree(http->redis);
+		#endif
 		
 		free(http);
 	}

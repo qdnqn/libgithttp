@@ -2,7 +2,9 @@
 #define G_AUTH_H
 
 #include <inttypes.h>
-#include "g_http.h"
+
+#include "gh_config.h"
+#include "gh_http.h"
 
 #define REDIS_EMPTY					1
 #define REDIS_INVALID_TYPE			2

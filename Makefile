@@ -1,5 +1,5 @@
 EXE = libgithttp.out
-SOURCES = refs.c g_auth.c git_init.c g_objects.c g_parser.c g_http.c g_buffer.c g_string.c
+SOURCES = gh_refs.c gh_auth.c gh_init.c gh_objects.c gh_broker.h gh_vectors.h gh_parser.c gh_http.c gh_buffer.c gh_log.c gh_string.c
 OBJS = $(addsuffix .o, $(basename $(notdir $(SOURCES))))
 UNAME_S := $(shell uname -s)
 

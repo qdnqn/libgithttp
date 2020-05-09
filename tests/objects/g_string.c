@@ -3,9 +3,13 @@
 #include <inttypes.h>
 #include <string.h>
 #include <stdarg.h>
+#include <errno.h>
+
+extern int errno;
 
 #include "g_buffer.h"
 #include "g_string.h"
+#include "g_log.h"
 
 g_str_t* string_init(){
 	g_str_t* temp = malloc(sizeof(g_str_t));
@@ -313,7 +317,8 @@ uint8_t string_save_to_file_binary(g_str_t* data,  char* file){
 	fp = fopen(file, "wb");
 	
 	if (fp == NULL){
-			return -1;
+		log(G_FILE, "Error opening file: ");	
+		return -1;
 	}
 	
 	fwrite(data->str, data->size-1, 1, fp);
@@ -328,7 +333,8 @@ uint8_t string_save_to_file(g_str_t* data,  char* file){
 	fp = fopen(file, "w");
 	
 	if (fp == NULL){
-			return -1;
+		log(G_FILE, "Error opening file: ");	
+		return -1;
 	}
 	
 	fprintf(fp, "%s", data->str);
@@ -340,7 +346,13 @@ uint8_t string_save_to_file(g_str_t* data,  char* file){
 
 uint8_t string_load_from_file_binary(g_str_t* pack, char* file){
 	FILE *fp;
+	int errnum;
 	fp = fopen (file, "rb");
+	
+	if (fp == NULL){
+		log(G_FILE, "Error opening file: ");	
+		return -1;
+	}
 	
 	size_t sz = 0;
 	fseek(fp, 0L, SEEK_END);
@@ -359,7 +371,13 @@ uint8_t string_load_from_file_binary(g_str_t* pack, char* file){
 
 uint8_t string_load_from_file(g_str_t* pack, char* file){
 	FILE *fp;
+	int errnum;
 	fp = fopen (file, "r");
+	
+	if (fp == NULL){
+		log(G_FILE, "Error opening file: ");	
+		return -1;
+	}
 	
 	size_t sz = 0;
 	fseek(fp, 0L, SEEK_END);
@@ -379,7 +397,13 @@ uint8_t string_load_from_file(g_str_t* pack, char* file){
 
 uint8_t string_load_from_file_bytes(g_str_t* pack, char* file, int length){
 	FILE *fp;
+	int errnum;
 	fp = fopen (file, "r");
+	
+	if (fp == NULL){
+		log(G_FILE, "Error opening file: ");	
+		return -1;
+	}
 					
 	string_allocate(pack, length+1);	 		
 				
