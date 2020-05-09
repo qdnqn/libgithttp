@@ -8,12 +8,12 @@ It can process http request headers and body from git client, handle negotiate p
 ## Building library
 ```
 git clone https://github.com/qdnqn/http-libgit2
-cd http-libgit2
+cd libgithttp
 make
 ```
 #### Linking
 ```
-gcc myprogram.c -Ipath/to/libgit_header_files -Lpath/to/ligbgit.so_dir -llibgithttp
+gcc myprogram.c -Ipath/to/libgithttp_header_files -Lpath/to/ligbgithttp.so_dir -llibgithttp -llibgit2
 ```
 #### Dependencies
 
