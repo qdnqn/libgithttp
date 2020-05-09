@@ -130,7 +130,7 @@ File gh_objects.c contains functions for processing request with header content-
 1. ```application/x-git-upload-pack-result -> get_packfile(g_http_resp*, git_repository*, g_str_t*(path_to_repo), g_str_t*(path_to_request_file));```
 2. ```application/x-git-receive-pack-result -> save_packfile(g_http_resp*, git_repository*, g_str_t*(path_to_repo), g_str_t*(path_to_request_file));```
 
-If you are interested how is implemented packfile processing (If you are interested in packfile processsing and having trouble finding information on the internet as I had) you can refer yourself to gh_objects.c.
+If you are interested how is implemented packfile processing (and having trouble finding information on the internet as I had) you can refer yourself to gh_objects.c and section Useful links also!).
 There you can find functions for:
 1. Generating packfile for git repository
 2. Applying pack file to git repository(Fixing thin pack)
