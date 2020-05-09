@@ -53,7 +53,16 @@ int main(){
     }
     
     get_packfile(http, repo, path, "request.txt");
-    string_debug(http->pack);
+    
+    string_append_hexsign(http->output, "NAK\n");
+    string_concate(http->output, http->pack);
+
+    /* 
+     * Be aware that http->output have '\0' at the end of string so you need to omit it before sending back
+     * to git client over http (It may break your git request.).
+     */
+
+    string_debug(http->output); // Will output string content to stdio.
 
     string_clean(path);
     string_clean(username);
@@ -66,7 +75,7 @@ Where requests.txt file contains
 0032want bdd6ceb415a8f5cfbecf0ed64310309c7880e1b8
 00000009done
 ```
-Response in http->pack will contain packfile generated from current HEAD in your repository:
+Response in http->pack will contain packfile generated from current HEAD in your repository and http->output:
 ```
 0008NAK
 PACK
@@ -108,4 +117,33 @@ int main(){
     return 0;
 }
 ```
-Assumingly you already captured git push request in reqest.txt code above will process it and apply to your git repository.
+Assumingly you already captured git push request in reqest.txt, code above will process it and apply to your git repository.
+Be aware that git push request sent over http is in binary format so you should save it as binary in requests.txt file.
+## Under the hood
+Most crucial functions can be found in gh_refs.c and gh_objects.c.
+
+File gh_refs.c contains functions for processing request with header content-types:
+1. application/x-git-upload-pack-advertisement -> git_get_refs(g_http_resp*, git_repository*, g_str_t*(g_http->refs), g_str_t*(path_to_repo));
+2. application/x-git-receive-pack-advertisement -> git_set_refs(git_repository*, g_str_t*(g_http->refs));
+
+File gh_objects.c contains functions for processing request with header content-types:
+1. application/x-git-upload-pack-result -> get_packfile(g_http_resp*, git_repository*, g_str_t*(path_to_repo), g_str_t*(path_to_request_file));
+2. application/x-git-receive-pack-result -> save_packfile(g_http_resp*, git_repository*, g_str_t*(path_to_repo), g_str_t*(path_to_request_file));
+
+If you are interested how is implemented packfile processing you can refer yourself to gh_objects.c.
+There you can find functions for:
+1. Generating packfile for git repository
+2. Applying pack file to git repository(Fixing thin pack)
+3. Getting commits from packfile(Function -> verify_pack)
+
+## Future plans
+Project is new born as side library doing my homework so I'm planning to work on it more in future.
+## License
+Copyright 2020 adnn.selimovic@gmail.com
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
