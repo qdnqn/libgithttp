@@ -5,6 +5,9 @@ C library providing git http transfer processing using libgit2. This library pro
 Library can process http request containing git push request and process thin pack file accordingly and git pull/clone request. Currently only option made available is  report-status for git smart requests. 
 
 It can process http request headers and body from git client, handle negotiate process, and generate appropriate response so you can send it back to git client. Although you will need medium for http transfer. There's an example of creating custom nginx module [nginx-git-module](https://github.com/qdnqn/nginx-git-module) to handle HTTP transfer. You can use any other http server you prefer for handling http transfer of data.  
+## Use case
+You can find working code for custom ngxin module (https://github.com/qdnqn/nginx-git-module) using this library.
+
 ## Building library
 ```
 # Assuming you have libgit2 compiled in directory ../libgit2/build and
@@ -29,8 +32,6 @@ If you don't want brokering service you need to remove USEBROKER from gh_config.
 You can reference yourself to Makefile in repo for compiling instructions. You need to take in consideration that Makefile in repo uses brokering service if you wish to compile libgithttp with it.
 
 #### Pull example
-You can find example code for custom ngxin module (https://github.com/qdnqn/nginx-git-module). 
-
 Here is basic example of code needed for git pull of specific commit.
 ```c
 #include "git2.h"           // include libgit2.h file(libgit2 library)
