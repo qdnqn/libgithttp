@@ -41,7 +41,7 @@ Authentication is not possible. It is possible to transfer authentication on som
 ```redis
 HGETALL username:repo_name 
 ```
-If found element in a format like above actions will be allowed. Also you need to implement your logic for allowing or disabling actions based on user level.
+If element is found in a format like above actions will be allowed. Also you need to implement your logic for allowing or disabling actions based on user level.
 
 
 Example is given here (Snippet taken from [nginx-git-module](https://github.com/qdnqn/nginx-git-module)): 
