@@ -18,6 +18,8 @@ void git_get_refs(g_http_resp* http, git_repository* repo, g_str_t* grefs, g_str
 	git_reference *ref = NULL;
 	git_reference *resolved = NULL;
 	
+	uint8_t foundHead = 0;
+	
 	char hex[GIT_OID_HEXSZ+1];
 	const git_oid *oid;
 	git_object *obj;
@@ -51,7 +53,7 @@ void git_get_refs(g_http_resp* http, git_repository* repo, g_str_t* grefs, g_str
 		
 		char *dummy = (char*) git_reference_name(ref); // Prevent gcc warning
 		
-		if(isHead(path, dummy, hex)){
+		if(isHead(path, dummy, hex) && !foundHead){
 			string_free(temp);
 			string_add(temp, "HEAD:");
 			string_add(temp, dummy);
@@ -63,11 +65,13 @@ void git_get_refs(g_http_resp* http, git_repository* repo, g_str_t* grefs, g_str
 									
 			string_append_hexsign(grefs, "%s %s%c%s\n", hex, "HEAD", '\0', temp->str);
 			string_append_hexsign(grefs, "%s %s\n", hex, dummy);
-			string_clean(temp);
+			string_free(temp);
+			
+			foundHead = 1;
 		} else {
 			string_append_hexsign(grefs, "%s %s\n", hex, git_reference_name(ref));
 		}
-				
+						
 		git_reference_free(ref);
 		
 		if (resolved)
@@ -76,6 +80,8 @@ void git_get_refs(g_http_resp* http, git_repository* repo, g_str_t* grefs, g_str
 		git_object_free(obj);
 	}
 	
+	string_clean(temp);		
+				
 	string_add(grefs, "0000");
 	git_reference_iterator_free(refs);
 }
@@ -93,9 +99,15 @@ uint8_t isHead(g_str_t* path, char* ref_name, char* hex){
 					
 			return 1;
 		} else {
+			string_clean(temp);
+			string_clean(hex_fromfile);
+			
 			return 0;
 		}	
 	} else {
+			string_clean(temp);
+			string_clean(hex_fromfile);
+			
 			return 0;
 	}
 }
@@ -127,10 +139,9 @@ void git_set_refs(git_repository* r, g_str_t* grefs)
 	string_add(grefs, "0000"); 																							// Dont need new line here! (*Git protocol)
 	
 	if(!git_repository_is_empty(r)){
-		while(git_reference_next(&ref, refs) == 0)
-		{
+		while(git_reference_next(&ref, refs) == 0){
 			if (git_reference_type(ref) == GIT_REF_SYMBOLIC)
-			git_reference_resolve(&resolved, ref);
+				git_reference_resolve(&resolved, ref);
 		
 			oid = git_reference_target(resolved ? resolved : ref);
 			git_oid_fmt(hex, oid);
@@ -174,7 +185,7 @@ int main(){
 	if(git_init(&repo, path->str) == GIT_REPO_INITIALIZED){						
 		//save_packfile(http, repo, path, "/home/wubuntu/test.txt");
 		
-		//git_get_refs(http, repo, http->refs, path);
+		git_get_refs(http, repo, http->refs, path);
 		//git_set_refs(repo, http->refs);
 		
 		//printf("%s\n", http->refs->str);

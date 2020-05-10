@@ -1,7 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "../../g_buffer.h"
-#include "../../g_string.h"
+
+#include "../../gh_buffer.h"
+#include "../../gh_string.h"
 
 int main(){
 		char* x = "001e#";
@@ -22,18 +23,33 @@ int main(){
 		
 		string_char(string1, "one");
 		string_char(string2, "two");
+		
 		string_add(string2, "three");
 		string_add(string2, "xxx");
-		string_add(string4, "test");
 		
+		printf("Testing string_add: %s\n", string2->str);
+		
+		string_free(string2);
+		string_clean(string2);
+		
+		string2 = string_init();		
+		
+		printf("Testing string_add: %s\n", string2->str);
+		
+		string_add(string2, "xxxxxxxxxxxxxxxxx");
+		string_add(string2, "yyx");
+			
+		printf("Testing string_add: %s\n", string2->str);
+	
+		string_add(string4, "test");
+				
+		printf("String2: %s\n", string2->str);
 		
 		string_copy_bytes_stop_at_char(string5, string4, 0, 's');
 		printf("String5: %s\n", string5->str);
 		
 		string_hexsign(string1);
-		
-		printf("String2: %s\n", string2->str);
-						
+
 		buffer_char(buffer1, "three");
 		buffer_char(buffer2, "four");
 		

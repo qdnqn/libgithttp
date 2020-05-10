@@ -130,39 +130,42 @@ void get_packfile(g_http_resp* http, git_repository* repo, g_str_t* path_repo, c
 		error = git_create_packfile_from_repo(http->pack, http->message, repo, http->refs_w[i]->str, path_repo);
 		
 		if (error == 0){
-			#if defined(GH_USEBROOKER)
-				gh_broker* broker = broker_init(http);
-				
-				broker_channel(broker, "%s.repo", http->repo->str);
-				
-				broker_message(broker, "{\"message\": \"%s\", "
-															 "\"user\": \"%s\", "
-															 "\"repo\": \"%s\", "
-															 "\"path_repo\": \"%s\", "
-															 "\"type\": \"%s\", "
-															 "\"ref_oid\": \"%s\", "
-															 "\"old_oid\": \"\", "
-															 "\"new_oid\": \"\", "
-															 "\"indexed_obj\": \"%d\"}",
-															 "Pulling from repository.", 
-																http->username->str, 
-																http->repo->str, 
-																path_repo->str,
-																"push", 
-																http->refs_w[i]->str);						 
-					 
-				broker->reply = redisCommand(broker->redis, "PUBLISH %s %s",	broker->channel->str, broker->message->str);											 
-						 
-				broker_reply_clean(broker);	
-				broker_clean(broker);
-			#endif
-			break;
+			// Restructure these conditions
 		} else if (error == -3) {
 			printf("Commit not found in this repo: %s\n", http->refs_w[i]->str);
 		} else {
 			printf("Something went south.\n");
 		}
 	}
+	
+	#if defined(GH_USEBROOKER)
+		if(error == 0){
+			gh_broker* broker = broker_init(http);
+			
+			broker_channel(broker, "%s.repo", http->repo->str);
+			
+			broker_message(broker, "{\"message\": \"%s\", "
+														 "\"user\": \"%s\", "
+														 "\"repo\": \"%s\", "
+														 "\"path_repo\": \"%s\", "
+														 "\"type\": \"%s\", "
+														 "\"ref_oid\": \"%s\", "
+														 "\"old_oid\": \"\", "
+														 "\"new_oid\": \"\", "
+														 "\"indexed_obj\": \"%d\"}",
+														 "Pulling from repository.", 
+															http->username->str, 
+															http->repo->str, 
+															path_repo->str,
+															"push", 
+															http->refs_w[i]->str);						 
+				 
+			broker->reply = redisCommand(broker->redis, "PUBLISH %s %s",	broker->channel->str, broker->message->str);											 
+					 
+			broker_reply_clean(broker);	
+			broker_clean(broker);
+		}
+	#endif
 	
 	string_clean(path_to_newpack);
 }

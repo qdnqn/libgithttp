@@ -3,7 +3,7 @@
 ##
 
 EXE = string_buffer_test.out
-SOURCES = g_string_buffer_test.c g_string.c g_buffer.c
+SOURCES = g_string_buffer_test.c gh_string.c gh_buffer.c gh_log.c
 OBJS = $(addsuffix .o, $(basename $(notdir $(SOURCES))))
 UNAME_S := $(shell uname -s)
 
@@ -14,7 +14,7 @@ CXXFLAGS2LIB = -shared
 LIBS = -I. -I../../ -L../libgit2/build/ -lgit2
 
 %.o: %.c
-	$(CXX) $(CXXFLAGS1) -c $< -o $@
+	$(CXX) $(CXXFLAGS1) $(LIBS) -c $< -o $@
 
 $(EXE): $(OBJS)
 	#$(CXX) -o libgitrefs.so $^ $(CXXFLAGS2LIB) $(LIBS)

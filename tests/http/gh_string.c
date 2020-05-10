@@ -148,13 +148,13 @@ uint8_t string_add(g_str_t* gstr, const char* literal){
 		
 		if(gstr->size == 0){
 			string_allocate(gstr, length+1);
-			memcpy(gstr->str, literal, length);
+			memcpy(gstr->str, literal, length+1);
 		} else {
 			string_reallocate(gstr, length);
 			memcpy(gstr->str+gstr->size - length - 1, literal, length);
 		}
 		
-		*(gstr->str+gstr->size-1) = '\0';
+		//*(gstr->str+gstr->size-1) = '\0';
 		
 		return 0;
 	} else {
