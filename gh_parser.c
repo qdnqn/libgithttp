@@ -83,6 +83,7 @@ uint8_t parser_refs(g_http_resp* http, char *file){
 			if (flg == 0){			
 				string_extract(caps, line, 50, strlen(line));	// Radi zato sto kad snimimo ne snimimo \0 char
 				parser_capabilities(http, caps);
+						
 				add_ref_w(http, oid->str);
 			}
 		} else if (strcmp(type->str, "have") == 0){

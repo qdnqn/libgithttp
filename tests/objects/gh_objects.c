@@ -26,7 +26,7 @@ static int foreach_cb(const git_oid *oid, void *data);
 static int indexed_objects = 0;
 static commit_vector commits;
 
-uint8_t git_create_packfile_from_repo(g_str_t* pack, g_str_t* message, git_repository* repo, const char* oid, g_str_t* path){
+uint8_t git_create_packfile_from_repo(g_str_t* pack, g_str_t* message, git_repository* repo, g_http_resp* http, g_str_t* path){
 	int error = 0;
 	
 	g_str_t* path_to_pack = string_init();
@@ -40,47 +40,51 @@ uint8_t git_create_packfile_from_repo(g_str_t* pack, g_str_t* message, git_repos
 				
 	//char hash[GIT_OID_HEXSZ+1]; hash[GIT_OID_HEXSZ] = '\0';
 	
+	error = git_packbuilder_new(&pbuilder, repo);
+	git_revwalk_new(&walker, repo);
+	
+	if(error < 0)
+		goto clean;
+	
 	commit_vector commits = {NULL, 0};
 	
 	git_commit* wcommit;
 	git_oid g_oid;
-	git_oid_fromstr(&g_oid, oid);
 	
-	if(access(path_to_pack->str, W_OK) != 0){
-		error = -1;
-		goto clean;
-	} 
-
-	error = git_commit_lookup(&wcommit, repo, &g_oid);
-	git_commit_free(wcommit);
-			
-	if(error < 0){
-		goto clean;
-	}
+	size_t i;
 	
-	error = git_packbuilder_new(&pbuilder, repo);
-	
-	if(error < 0)
-		goto clean;
-	 	
-	git_revwalk_new(&walker, repo);
-	git_revwalk_sorting(walker, GIT_SORT_TIME);
-	git_revwalk_push(walker, &g_oid);
-	
-	while ((git_revwalk_next(&g_oid, walker)) == 0){
-    error = git_commit_lookup(&wcommit, repo, &g_oid);
-    
-    if (error == 0){
-			git_commit_insert(&commits, g_oid);
-			git_packbuilder_insert(pbuilder, &g_oid, NULL);
-		}
+	for (i=0;i<http->refs_sz[0];i++){	
+		git_oid_fromstr(&g_oid, http->refs_w[i]->str);
 		
+		if(access(path_to_pack->str, W_OK) != 0){
+			error = -1;
+			goto clean;
+		} 
+
+		error = git_commit_lookup(&wcommit, repo, &g_oid);
 		git_commit_free(wcommit);
-  }
+				
+		if(error < 0){
+			goto clean;
+		}
+			
+		git_revwalk_sorting(walker, GIT_SORT_TIME);
+		git_revwalk_push(walker, &g_oid);
+		
+		while ((git_revwalk_next(&g_oid, walker)) == 0){
+			error = git_commit_lookup(&wcommit, repo, &g_oid);
+			
+			if (error == 0){
+				git_commit_insert(&commits, g_oid);
+				git_packbuilder_insert(pbuilder, &g_oid, NULL);
+			}
+			
+			git_commit_free(wcommit);
+		}
+	}
   
   git_object *obj;
-  size_t i;
-
+  
   for (i=0;i<commits.size;i++){
 		git_object_lookup(&obj, repo, commits.oid[i], GIT_OBJ_COMMIT);
 		git_packbuilder_insert_tree(pbuilder, git_commit_tree_id((git_commit *)obj));
@@ -94,7 +98,7 @@ uint8_t git_create_packfile_from_repo(g_str_t* pack, g_str_t* message, git_repos
    
   temp->str = buf.ptr;
   temp->size = buf.size;
-  
+    
   string_copy_bytes(pack, temp, 0, temp->size);
  
   git_buf_free(&buf);
@@ -123,23 +127,41 @@ clean:
 void get_packfile(g_http_resp* http, git_repository* repo, g_str_t* path_repo, char* request_file){
 	parser_refs(http, request_file);
 	
-	int i, error;
+	int i, error, failed = 0;
 	g_str_t* path_to_newpack = string_init();
 
-	for (i=0;i<http->refs_sz[0];i++){
-		error = git_create_packfile_from_repo(http->pack, http->message, repo, http->refs_w[i]->str, path_repo);
-		
-		if (error == 0){
-			// Restructure these conditions
-		} else if (error == -3) {
-			printf("Commit not found in this repo: %s\n", http->refs_w[i]->str);
-		} else {
-			printf("Something went south.\n");
-		}
-	}
+	#if defined(GH_USEBROOKER)
+			gh_broker* broker = broker_init(http);
+			broker_channel(broker, "%s.repo", http->repo->str);
+	#endif
 	
+	error = git_create_packfile_from_repo(http->pack, http->message, repo, http, path_repo);
+	
+	if (error == 0){
+		#if defined(GH_USEBROOKER)	
+			for (i=0;i<http->refs_sz[0];i++){	
+					broker_message(broker, "{\"type\": \"%s\", \"parent_oid\": \"%s\", \"child_oid\": \"%s\"}",
+																	"child-pull", 
+																	http->refs_w[0]->str, 
+																	http->refs_w[i]->str);
+																	
+					broker->reply = redisCommand(broker->redis, "PUBLISH %s %s", broker->channel->str, broker->message->str);
+					
+					broker_reply_clean(broker);													
+			}
+		#endif
+	} else if (error == -3) {
+		failed = 1;
+		printf("Commit not found in this repo: %s\n", http->refs_w[i]->str);
+	} else {
+		failed = 1;
+		printf("Something went south (Debug libgit2).\n");
+	}
+		
 	#if defined(GH_USEBROOKER)
 		if(error == 0){
+			broker_clean(broker);
+			
 			gh_broker* broker = broker_init(http);
 			
 			broker_channel(broker, "%s.repo", http->repo->str);
@@ -157,8 +179,8 @@ void get_packfile(g_http_resp* http, git_repository* repo, g_str_t* path_repo, c
 															http->username->str, 
 															http->repo->str, 
 															path_repo->str,
-															"push", 
-															http->refs_w[i]->str);						 
+															"pull", 
+															http->refs_w[0]->str);						 
 				 
 			broker->reply = redisCommand(broker->redis, "PUBLISH %s %s",	broker->channel->str, broker->message->str);											 
 					 
@@ -251,6 +273,17 @@ void save_packfile(g_http_resp* http, git_repository* repo, g_str_t* path, char*
 			
 	if(error == 0){
 		verify_pack(http, packdir, idx);
+		
+		g_str_t* files_temp_path = string_init();
+		
+		string_add(files_temp_path, "/tmp/");
+		string_add(files_temp_path, http->repo->str);
+		string_add(files_temp_path, ".repo");
+		
+		checkout(repo, files_temp_path->str, http->push_new_oids[0]->str);
+		
+		string_clean(files_temp_path);
+		
 		g_str_t* path_head = string_init();
 		
 		string_add(path_head, path->str);

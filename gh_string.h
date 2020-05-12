@@ -37,6 +37,7 @@ uint8_t string_load_from_file(g_str_t* pack, char* file);
 uint8_t string_load_from_file_bytes(g_str_t* pack, char* file, int length);
 
 void string_debug(g_str_t* gstr);
+void string_debug_hex(g_str_t* gstr);
 void string_free(g_str_t*);
 void string_destroy_container(g_str_t* gstr);
 void string_clean(g_str_t*);

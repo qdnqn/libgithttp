@@ -193,9 +193,17 @@ uint16_t string_extract(g_str_t* gstr, char* literal, int start, int end)
  */
  
 uint8_t string_copy_bytes(g_str_t* gstr1, g_str_t* gstr2, int start, int length){
-	string_allocate(gstr1, length+1);
-	memcpy(gstr1->str, gstr2->str+start, length);
-	*(gstr1->str+gstr1->size-1) = '\0';
+	if(gstr1->size == 0){
+		string_allocate(gstr1, length+1);
+		memcpy(gstr1->str, gstr2->str+start, length);
+		*(gstr1->str+gstr1->size-1) = '\0';
+	} else {
+		size_t old = gstr1->size;
+		
+		string_reallocate(gstr1, length);
+		memcpy(gstr1->str+old-1, gstr2->str+start, length);
+		*(gstr1->str+gstr1->size-1) = '\0';
+	}
 	
 	return 0;
 }
@@ -423,6 +431,21 @@ void string_debug(g_str_t* gstr){
 				printf("[NULL]");
 			else
 				printf("%c",gstr->str[i]);
+		}
+		
+		printf("\n");
+}
+
+void string_debug_hex(g_str_t* gstr){
+		int i;
+		
+		printf("String: ");
+		
+		for(i=0;i<gstr->size;i++){
+			if(gstr->str[i] == 0)
+				printf("[0x00]");
+			else
+				printf("%02X",gstr->str[i]);
 		}
 		
 		printf("\n");

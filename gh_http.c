@@ -113,17 +113,24 @@ static void string_free_array(g_str_t** array, size_t* size){
 
 uint8_t add_ref_w(g_http_resp* http, char* id){
 		g_str_t* temp = string_init();
-		string_char(temp, id);
+		string_add(temp, id);
 		
+		string_debug(temp);
+				
 		if(http->refs_sz[0] == 0){
 			http->refs_w[0] = temp; 
-		} else {
-			http->refs_w = realloc(http->refs_w, (http->refs_sz[0]+1) * sizeof(g_str_t*));
+		} else {						
+			void *t = realloc(http->refs_w, (http->refs_sz[0]+1) * sizeof(g_str_t*));
+			
+			if(t == NULL)
+				return 1;
+						
+			http->refs_w = t;
 			http->refs_w[http->refs_sz[0]] = temp; 
 		}
 		
 		http->refs_sz[0]++;
-		
+			
 		return 0;
 }
 
